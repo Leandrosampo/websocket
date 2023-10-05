@@ -1,0 +1,12 @@
+[
+  {
+    "id": 1,
+    "title": "cafe",
+    "description": "dolca",
+    "price": "23.00",
+    "code": "1",
+    "stock": "10",
+    "status": true,
+    "category": 0
+  }
+]

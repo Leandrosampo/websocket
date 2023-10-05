@@ -1,0 +1,88 @@
+<h1>Lista de Productos en Tiempo Real</h1>
+<ul id="realTimeProductsList">
+    {{#each products}}
+        <li data-product-id="{{this.id}}">
+            {{this.title}} - {{this.description}} - ${{this.price}}
+            <button onclick="deleteProduct({{this.id}})">Eliminar</button>
+        </li>
+    {{/each}}
+</ul>
+<form id="productForm">
+  <label for="productName">Nombre del producto:</label>
+  <input type="text" id="productName" name="productName" required>
+
+  <label for="productDescription">Descripción del producto:</label>
+  <input type="text" id="productDescription" name="productDescription" required>
+
+  <label for="productPrice">Precio del producto:</label>
+  <input type="text" id="productPrice" name="productPrice" required>
+
+  <label for="productCode">Código del producto:</label>
+  <input type="text" id="productCode" name="productCode" required>
+
+  <label for="productStock">Stock del producto:</label>
+  <input type="number" id="productStock" name="productStock" required>
+
+  <button type="submit">Agregar Producto</button>
+
+</form>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+<script>
+    const socket = io();
+
+    document.getElementById('productForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const productName = document.getElementById('productName').value;
+        const productDescription = document.getElementById('productDescription').value;
+        const productPrice = document.getElementById('productPrice').value;
+        const productCode = document.getElementById('productCode').value;
+        const productStock = document.getElementById('productStock').value;
+
+        socket.emit('createProduct', {
+            title: productName,
+            description: productDescription,
+            price: productPrice,
+            code: productCode,
+            stock: productStock,
+        });
+    });
+
+        socket.on('productsUpdate', (updatedProducts) => {
+        // Actualizar la interfaz con la lista completa de productos
+        const productList = document.getElementById('realTimeProductsList');
+        productList.innerHTML = ''; // Limpiar la lista antes de actualizar
+
+        updatedProducts.forEach((product) => {
+            const newItem = document.createElement('li');
+            newItem.innerHTML = `${product.title} - ${product.description} - $${product.price} <button onclick="deleteProduct(${product.id})">Eliminar</button>`;
+            productList.appendChild(newItem);
+        });
+    });
+
+    function deleteProduct(productId) {
+        socket.emit('deleteProduct', productId);
+    }
+
+    socket.on('newProduct', (productId) => {
+    // Solicitar la información actualizada del producto al servidor
+    socket.emit('requestProductInfo', productId);
+});
+
+    socket.on('productInfo', (product) => {
+        const productList = document.getElementById('realTimeProductsList');
+        const newItem = document.createElement('li');
+        newItem.innerHTML = `${product.title} - ${product.description} - $${product.price} <button onclick="deleteProduct(${product.id})">Eliminar</button>`;
+        productList.appendChild(newItem);
+});
+
+
+    socket.on('productDeleted', (productId) => {
+        const productList = document.getElementById('realTimeProductsList');
+        const itemToDelete = productList.querySelector(`li[data-product-id="${productId}"]`);
+        if (itemToDelete) {
+            productList.removeChild(itemToDelete);
+        }
+    });
+</script>
